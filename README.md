@@ -59,24 +59,24 @@
 
 ### `search_listings`
 
-- **What it does:**
-- **Inputs:** <!-- name and type each: `max_price` (float), not "a price" -->
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Searches the listings for items that match a description, size, and maximum price.
+- **Inputs:** `description` (str), `size` (str or None), `max_price` (float or None).
+- **Returns:** A list of matching listing dictionaries, ordered by best match. Each dictionary contains fields such as title, description, category, style tags, size, condition, price, colors, brand, and platform.
+- **When it has nothing:** Returns an empty list `[]`.
 
 ### `suggest_outfit`
 
-- **What it does:**
-- **Inputs:**
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Suggests one or two outfits using the selected listing and items from the user's wardrobe.
+- **Inputs:** `new_item` (dict), `wardrobe` (dict).
+- **Returns:** A non-empty string containing outfit suggestions using the new item and available wardrobe pieces.
+- **When it has nothing:** If the wardrobe is empty, returns general styling advice for the new item instead of failing.
 
 ### `create_fit_card`
 
-- **What it does:**
-- **Inputs:**
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Creates a short fit-card caption for the selected item and outfit.
+- **Inputs:** `outfit` (str), `new_item` (dict).
+- **Returns:** A two-to-four sentence caption that mentions the item, price, platform, and outfit vibe.
+- **When it has nothing:** If the outfit is empty or only whitespace, returns a descriptive message instead of failing.
 
 ---
 
@@ -94,6 +94,7 @@
      function have to be real. -->
 
 **Branch rule:**
+If search_listings returns an empty list, put a message in the session telling the user to change the description, size, or maximum price, and stop. Otherwise, select the first result and continue to suggest_outfit.
 
 **Where it lives:** `agent.py::run_agent`
 
