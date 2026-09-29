@@ -78,7 +78,48 @@ def search_listings(
     Test it from a terminal before you move on:
         python -c "from tools import search_listings; print(search_listings('graphic tee', max_price=30))"
     """
-    # TODO: replace this with your implementation
+    # TODO: r    listings = load_listings()
+    listings = load_listings()
+    query_words = set(description.lower().split())
+    matches = []
+
+    for listing in listings:
+        if max_price is not None and listing["price"] > max_price:
+            continue
+
+        if size is not None:
+            requested_size = size.strip().lower()
+            listing_size = listing["size"].lower()
+
+            size_parts = [
+                part.strip()
+                for part in listing_size.replace("(", "/").replace(")", "/").split("/")
+            ]
+
+            if requested_size not in size_parts and requested_size != listing_size:
+                continue
+
+        searchable_text = " ".join([
+            listing["title"],
+            listing["description"],
+            listing["category"],
+            " ".join(listing["style_tags"]),
+            " ".join(listing["colors"]),
+            listing["brand"] or "",
+            listing["platform"],
+        ]).lower()
+
+        score = sum(1 for word in query_words if word in searchable_text)
+
+        if score > 0:
+            matches.append((score, listing))
+
+    matches.sort(key=lambda item: item[0], reverse=True)
+
+    return [
+        listing
+        for score, listing in matches[:config.SEARCH_RESULT_LIMIT]
+    ]
     return []
 
 
@@ -112,7 +153,41 @@ def suggest_outfit(new_item: dict, wardrobe: dict) -> str:
     Test it from a terminal before you move on:
         python -c "from tools import suggest_outfit; from utils.data_loader import get_example_wardrobe, load_listings; print(suggest_outfit(load_listings()[0], get_example_wardrobe()))"
     """
-    # TODO: replace this with your implementation
+        
+    items = wardrobe.get("items", [])
+    item_details = (
+        f"Item: {new_item['title']}\n"
+        f"Category: {new_item['category']}\n"
+        f"Colors: {', '.join(new_item['colors'])}\n"
+        f"Style tags: {', '.join(new_item['style_tags'])}\n"
+    )
+
+    if not items:
+        prompt = (
+            f"{item_details}\n"
+            "The user's wardrobe is empty. Suggest one or two general ways "
+            "to style this item. Keep the advice short and specific."
+        )
+    else:
+        wardrobe_lines = []
+
+        for item in items:
+            wardrobe_lines.append(
+                f"- {item['name']} | category: {item['category']} | "
+                f"colors: {', '.join(item['colors'])} | "
+                f"style: {', '.join(item['style_tags'])}"
+            )
+
+        wardrobe_text = "\n".join(wardrobe_lines)
+
+        prompt = (
+            f"{item_details}\n"
+            f"The user already owns these pieces:\n{wardrobe_text}\n\n"
+            "Suggest one or two outfits using the new item and specific pieces "
+            "from the user's wardrobe. Name the wardrobe pieces you use."
+        )
+
+    return generate(prompt)
     return ""
 
 
@@ -152,5 +227,17 @@ def create_fit_card(outfit: str, new_item: dict) -> str:
     Test it from a terminal before you move on:
         python -c "from tools import create_fit_card; from utils.data_loader import load_listings; print(create_fit_card('jeans and white sneakers', load_listings()[0]))"
     """
-    # TODO: replace this with your implementation
-    return ""
+    if not outfit or not outfit.strip():
+        return "I couldn't create a fit card because no outfit suggestion was provided."
+    prompt = (
+        f"Create a short social media fit-card caption for this thrift find.\n\n"
+        f"Item: {new_item['title']}\n"
+        f"Price: ${new_item['price']:.2f}\n"
+        f"Platform: {new_item['platform']}\n"
+        f"Outfit: {outfit}\n\n"
+        "Write 2 to 4 sentences. Make it sound like a real post, not a product "
+        "description. Mention the item, its price, and the platform exactly once "
+        "each. Describe the specific vibe of the outfit."
+    )
+
+    return generate(prompt)
