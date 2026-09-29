@@ -106,34 +106,49 @@ If search_listings returns an empty list, put a message in the session telling t
 
 ## Sample Run
 
-<!-- Two things go here.
+**Full agent query**
 
-     1. One FULL query and its output, pasted as text.
-     2. Your three per-tool terminal tests — the command and what it printed. -->
+```text
+$ python app.py ask 'vintage graphic tee under $30'
 
-**One full query**
+The agent found a matching listing, selected an item, generated outfit suggestions using the user's wardrobe, and created a fit card.
 
-```
-$ python app.py ask '...'
-
+Fit card: Channeling peak 2000s streetwear energy with this adorable butterfly print baby tee. I love layering it under a cropped hoodie with baggy denim for that effortless Y2K vibe. Snagged this absolute gem for just $18.00 and you can find it live on my Depop right now!
 ```
 
 **The three tools, tested one at a time**
 
-```
+### 1. search_listings
+
+```text
 $ python -c "from tools import search_listings; print(search_listings('graphic tee', max_price=30))"
 
+Returned matching listings including vintage and graphic tees priced at or below $30, such as:
+Vintage Band Tee — Faded Grey — $19.00 — depop
+Vintage Graphic Hoodie — Faded Black — $26.00 — depop
 ```
 
-```
-$ python -c "from tools import suggest_outfit; ..."
+### 2. suggest_outfit
 
+```text
+$ python -c "from tools import suggest_outfit; from utils.data_loader import get_example_wardrobe, load_listings; print(suggest_outfit(load_listings()[0], get_example_wardrobe()))"
+
+Outfit 1: Casual Streetwear Classic
+The tool suggested styling the vintage Levi's 501 jeans with wardrobe pieces including a fitted white tank top, vintage black denim jacket, chunky white sneakers, and black crossbody bag.
+
+Outfit 2: Cozy & Grounded
+The tool suggested styling the jeans with an oversized grey crewneck sweatshirt, brown leather belt, black crossbody bag, and black combat boots.
 ```
 
-```
-$ python -c "from tools import create_fit_card; ..."
+### 3. create_fit_card
 
+```text
+$ python -c "from tools import create_fit_card; from utils.data_loader import load_listings; print(create_fit_card('jeans and white sneakers', load_listings()[0]))"
+
+Nothing beats the effortless vibe of these vintage Levi's 501 jeans paired with crisp white sneakers for that ultimate off-duty look. Grab this medium wash staple for just $38.00 before I change my mind. Up now on my Depop!
 ```
+
+The planning loop in `agent.py::run_agent` parses the query using simple string and regular-expression rules. It extracts the maximum price and size when provided and uses the remaining text as the description. If `search_listings` returns no results, the agent stops and asks the user to change the description, size, or maximum price instead of continuing to `suggest_outfit`.
 
 ---
 
